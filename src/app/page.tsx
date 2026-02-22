@@ -7,7 +7,9 @@ import { HomeComparisonChart } from "@/components/home-comparison-chart";
 import { PlayerHomeCard } from "@/components/player-home-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import { fetchCourses, fetchDashboard, fetchPlayers, type DashboardResponse } from "@/lib/apiClient";
+import { filterSeriesByTimeframe, type TimeframeOption } from "@/lib/timeframe";
 import type { Course, Player, PlayerId } from "@/lib/types";
 
 export default function HomePage() {
@@ -16,6 +18,9 @@ export default function HomePage() {
   const [dashboards, setDashboards] = useState<Record<string, DashboardResponse>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timeframe, setTimeframe] = useState<TimeframeOption>("1y");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
   async function load() {
     setLoading(true);
@@ -86,6 +91,11 @@ export default function HomePage() {
     });
   }, [dashboards]);
 
+  const filteredComparisonData = useMemo(
+    () => filterSeriesByTimeframe(comparisonData, timeframe, customStart || undefined, customEnd || undefined),
+    [comparisonData, timeframe, customStart, customEnd],
+  );
+
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 py-8 md:px-8">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-2">
@@ -120,11 +130,44 @@ export default function HomePage() {
       {!loading && !error ? (
         <div className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Handicap Index Over Time</CardTitle>
+              <Select
+                value={timeframe}
+                onChange={(event) => setTimeframe(event.target.value as TimeframeOption)}
+                className="w-36"
+              >
+                <option value="90d">90 days</option>
+                <option value="6m">6 months</option>
+                <option value="1y">1 year</option>
+                <option value="all">All time</option>
+                <option value="custom">Custom</option>
+              </Select>
             </CardHeader>
             <CardContent>
-              <HomeComparisonChart data={comparisonData} />
+              {timeframe === "custom" ? (
+                <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+                  <div>
+                    <div className="mb-1 text-xs text-zinc-600">Start date</div>
+                    <input
+                      type="date"
+                      value={customStart}
+                      onChange={(event) => setCustomStart(event.target.value)}
+                      className="h-9 w-full rounded-md border border-zinc-300 px-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-1 text-xs text-zinc-600">End date</div>
+                    <input
+                      type="date"
+                      value={customEnd}
+                      onChange={(event) => setCustomEnd(event.target.value)}
+                      className="h-9 w-full rounded-md border border-zinc-300 px-2 text-sm"
+                    />
+                  </div>
+                </div>
+              ) : null}
+              <HomeComparisonChart data={filteredComparisonData} />
             </CardContent>
           </Card>
 

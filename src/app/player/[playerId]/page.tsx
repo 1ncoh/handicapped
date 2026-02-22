@@ -14,6 +14,7 @@ import { Select } from "@/components/ui/select";
 import { fetchCourses, fetchDashboard, fetchRounds } from "@/lib/apiClient";
 import { formatNumber, formatPercent } from "@/lib/format";
 import { buildEffectiveDifferentials } from "@/lib/handicap";
+import { filterSeriesByTimeframe, type TimeframeOption } from "@/lib/timeframe";
 import { PLAYER_IDS, type Course, type PlayerId, type RoundWithCourse } from "@/lib/types";
 
 type ChartMetric =
@@ -49,6 +50,9 @@ export default function PlayerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chartMetric, setChartMetric] = useState<ChartMetric>("index");
+  const [timeframe, setTimeframe] = useState<TimeframeOption>("1y");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,6 +105,11 @@ export default function PlayerDashboardPage() {
       }));
   }, [chartMetric, dashboard, rounds]);
 
+  const filteredChartData = useMemo(
+    () => filterSeriesByTimeframe(chartData, timeframe, customStart || undefined, customEnd || undefined),
+    [chartData, timeframe, customStart, customEnd],
+  );
+
   const selectedChartOption = CHART_OPTIONS.find((option) => option.value === chartMetric) ?? CHART_OPTIONS[0];
 
   return (
@@ -141,14 +150,47 @@ export default function PlayerDashboardPage() {
                     </option>
                   ))}
                 </Select>
+                <Select
+                  value={timeframe}
+                  onChange={(event) => setTimeframe(event.target.value as TimeframeOption)}
+                  className="w-36"
+                >
+                  <option value="90d">90 days</option>
+                  <option value="6m">6 months</option>
+                  <option value="1y">1 year</option>
+                  <option value="all">All time</option>
+                  <option value="custom">Custom</option>
+                </Select>
                 {dashboard.provisional ? <Badge>Provisional</Badge> : null}
               </div>
             </CardHeader>
             <CardContent>
+              {timeframe === "custom" ? (
+                <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+                  <div>
+                    <div className="mb-1 text-xs text-zinc-600">Start date</div>
+                    <input
+                      type="date"
+                      value={customStart}
+                      onChange={(event) => setCustomStart(event.target.value)}
+                      className="h-9 w-full rounded-md border border-zinc-300 px-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-1 text-xs text-zinc-600">End date</div>
+                    <input
+                      type="date"
+                      value={customEnd}
+                      onChange={(event) => setCustomEnd(event.target.value)}
+                      className="h-9 w-full rounded-md border border-zinc-300 px-2 text-sm"
+                    />
+                  </div>
+                </div>
+              ) : null}
               {dashboard.indexMessage ? <Alert>{dashboard.indexMessage}</Alert> : null}
               <div className="mt-3">
                 <MetricLineChart
-                  data={chartData}
+                  data={filteredChartData}
                   color={selectedChartOption.color}
                   emptyLabel={`No ${selectedChartOption.label.toLowerCase()} data yet.`}
                 />
