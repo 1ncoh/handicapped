@@ -107,6 +107,21 @@ export function computeHandicapIndexFromEffective(effective: EffectiveDifferenti
   };
 }
 
+export function getUsedRoundIdsForCurrentIndex(rounds: RoundWithCourse[]) {
+  const effective = buildEffectiveDifferentials(rounds);
+  const last20 = [...effective].slice(-20);
+  const bestCount = Math.min(8, last20.length);
+  const best = [...last20].sort((a, b) => a.value - b.value).slice(0, bestCount);
+
+  const ids = new Set<string>();
+  for (const entry of best) {
+    for (const roundId of entry.roundIds) {
+      ids.add(roundId);
+    }
+  }
+  return ids;
+}
+
 export function computeCurrentHandicap(rounds: RoundWithCourse[]) {
   const effective = buildEffectiveDifferentials(rounds);
   return {

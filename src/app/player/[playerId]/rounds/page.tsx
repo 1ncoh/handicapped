@@ -6,13 +6,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { RoundFormDialog } from "@/components/round-form-dialog";
 import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fetchCourses, fetchRounds } from "@/lib/apiClient";
 import { readableDate } from "@/lib/format";
-import { buildEffectiveDifferentials } from "@/lib/handicap";
+import { buildEffectiveDifferentials, getUsedRoundIdsForCurrentIndex } from "@/lib/handicap";
 import { PLAYER_IDS, type Course, type PlayerId, type RoundWithCourse } from "@/lib/types";
 
 type FilterMode = "all" | "last10" | "course";
@@ -97,6 +98,8 @@ export default function PlayerRoundsPage() {
     return map;
   }, [allRounds]);
 
+  const usedRoundIds = useMemo(() => getUsedRoundIdsForCurrentIndex(allRounds), [allRounds]);
+
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 py-8 md:px-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -143,6 +146,7 @@ export default function PlayerRoundsPage() {
                   <TableHead>Holes</TableHead>
                   <TableHead>Score</TableHead>
                   <TableHead>Differential</TableHead>
+                  <TableHead>Used</TableHead>
                   <TableHead>Putts</TableHead>
                   <TableHead>Balls lost</TableHead>
                   <TableHead>GIR</TableHead>
@@ -162,6 +166,9 @@ export default function PlayerRoundsPage() {
                       {differentialByRoundId.has(round.id)
                         ? differentialByRoundId.get(round.id)?.toFixed(1)
                         : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {usedRoundIds.has(round.id) ? <Badge className="bg-blue-100 text-blue-800">Yes</Badge> : "-"}
                     </TableCell>
                     <TableCell>{round.putts ?? "-"}</TableCell>
                     <TableCell>{round.balls_lost ?? "-"}</TableCell>
