@@ -21,6 +21,13 @@ function ratingForPlayedHoles(round: RoundWithCourse) {
   return round.course.course_rating;
 }
 
+function parForPlayedHoles(round: RoundWithCourse) {
+  if (round.holes === 9 && round.course.holes === 18) {
+    return round.course.par / 2;
+  }
+  return round.course.par;
+}
+
 export function computeRoundDifferential(round: RoundWithCourse) {
   return computeDifferential({
     slope: round.course.slope_rating,
@@ -43,26 +50,33 @@ function toDifferential(round: RoundWithCourse, handicapAtTime: number) {
   return computeRoundDifferential(round);
 }
 
-export function buildEffectiveDifferentials(rounds: RoundWithCourse[]): EffectiveDifferential[] {
+function evaluateRoundsChronological(rounds: RoundWithCourse[]) {
   const ordered = [...rounds].sort((a, b) => {
     const byDate = a.played_at.localeCompare(b.played_at);
     if (byDate !== 0) return byDate;
     return a.created_at.localeCompare(b.created_at);
   });
 
-  const result: EffectiveDifferential[] = [];
+  const effective: EffectiveDifferential[] = [];
+  const evaluated: Array<{ round: RoundWithCourse; handicapAtTime: number; effectiveValue: number }> = [];
 
   for (const round of ordered) {
-    const handicapAtTime = computeHandicapIndexFromEffective(result).index ?? 0;
-    result.push({
+    const handicapAtTime = computeHandicapIndexFromEffective(effective).index ?? 0;
+    const effectiveValue = toDifferential(round, handicapAtTime);
+    evaluated.push({ round, handicapAtTime, effectiveValue });
+    effective.push({
       date: round.played_at,
-      value: toDifferential(round, handicapAtTime),
+      value: effectiveValue,
       source: round.holes === 9 ? "9-converted" : "18",
       roundIds: [round.id],
     });
   }
 
-  return result;
+  return { effective, evaluated };
+}
+
+export function buildEffectiveDifferentials(rounds: RoundWithCourse[]): EffectiveDifferential[] {
+  return evaluateRoundsChronological(rounds).effective;
 }
 
 export function computeHandicapIndexFromEffective(effective: EffectiveDifferential[]) {
@@ -125,12 +139,22 @@ export function computeIndexSeries(rounds: RoundWithCourse[]) {
 }
 
 export function computeRecentStats(rounds: RoundWithCourse[]) {
+  const evaluated = evaluateRoundsChronological(rounds).evaluated;
+  const adjustedScoreByRoundId = new Map<string, number>();
+  for (const item of evaluated) {
+    const adjustedScore =
+      item.round.holes === 9
+        ? item.round.score + parForPlayedHoles(item.round) + expectedNineDifferential(item.handicapAtTime)
+        : item.round.score;
+    adjustedScoreByRoundId.set(item.round.id, adjustedScore);
+  }
+
   const recent = [...rounds]
     .sort((a, b) => b.played_at.localeCompare(a.played_at))
     .slice(0, 10);
 
   const avgScore = recent.length
-    ? recent.reduce((sum, r) => sum + r.score, 0) / recent.length
+    ? recent.reduce((sum, r) => sum + (adjustedScoreByRoundId.get(r.id) ?? r.score), 0) / recent.length
     : null;
 
   const withPutts = recent.filter((r) => r.putts != null);

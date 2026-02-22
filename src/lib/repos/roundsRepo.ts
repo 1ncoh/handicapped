@@ -3,9 +3,10 @@ import type { Round, RoundWithCourse } from "@/lib/types";
 
 type RoundInsert = Omit<
   Round,
-  "id" | "created_at" | "updated_at" | "putts" | "gir" | "fir" | "three_putts" | "notes"
+  "id" | "created_at" | "updated_at" | "putts" | "balls_lost" | "gir" | "fir" | "three_putts" | "notes"
 > & {
   putts?: number | null;
+  balls_lost?: number | null;
   gir?: number | null;
   fir?: number | null;
   three_putts?: number | null;

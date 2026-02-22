@@ -26,6 +26,7 @@ create table if not exists rounds (
   holes int not null check (holes in (9, 18)),
   score int not null,
   putts int null,
+  balls_lost int null,
   gir int null,
   fir int null,
   three_putts int null,

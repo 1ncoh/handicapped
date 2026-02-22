@@ -22,14 +22,14 @@ export function IndexLineChart({ data, tiny = false }: { data: Point[]; tiny?: b
   return (
     <div className={tiny ? "h-24 w-full" : "h-64 w-full"}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={cleaned} margin={{ top: 8, right: 8, left: -15, bottom: 8 }}>
+        <LineChart data={cleaned} margin={{ top: 8, right: 16, left: 14, bottom: 8 }}>
           {!tiny && <CartesianGrid stroke="#e4e4e7" strokeDasharray="3 3" />}
           <XAxis
             dataKey="date"
             tickFormatter={(v) => new Date(`${v}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
             hide={tiny}
           />
-          <YAxis width={36} hide={tiny} domain={["auto", "auto"]} />
+          <YAxis width={44} hide={tiny} domain={["auto", "auto"]} />
           {!tiny && (
             <Tooltip
               formatter={(v) => Number(v).toFixed(1)}

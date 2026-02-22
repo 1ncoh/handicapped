@@ -38,6 +38,7 @@ export const roundSchema = z
     holes: z.union([z.literal(9), z.literal(18)]),
     score: z.number().int().min(20).max(200),
     putts: z.number().int().min(0).max(120).nullable().optional(),
+    balls_lost: z.number().int().min(0).max(30).nullable().optional(),
     gir: z.number().int().min(0).max(18).nullable().optional(),
     fir: z.number().int().min(0).max(18).nullable().optional(),
     three_putts: z.number().int().min(0).max(18).nullable().optional(),

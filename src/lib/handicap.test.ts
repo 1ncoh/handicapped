@@ -4,6 +4,7 @@ import {
   buildEffectiveDifferentials,
   computeHandicapIndexFromEffective,
   computeIndexSeries,
+  computeRecentStats,
   truncateOneDecimal,
 } from "@/lib/handicap";
 import type { RoundWithCourse } from "@/lib/types";
@@ -17,6 +18,7 @@ function makeRound(partial: Partial<RoundWithCourse>): RoundWithCourse {
     holes: partial.holes ?? 18,
     score: partial.score ?? 90,
     putts: null,
+    balls_lost: null,
     gir: null,
     fir: null,
     three_putts: null,
@@ -105,5 +107,21 @@ describe("handicap", () => {
     expect(series).toHaveLength(4);
     expect(series[0].index).not.toBeNull();
     expect(series[3].effectiveCount).toBe(4);
+  });
+
+  it("adjusts 9-hole scores in avg score using expected differential and par", () => {
+    const rounds = [
+      makeRound({ id: "r1", holes: 18, score: 90, played_at: "2026-01-01" }),
+      makeRound({
+        id: "r2",
+        holes: 9,
+        score: 45,
+        played_at: "2026-01-02",
+        course: { course_rating: 72, slope_rating: 120, par: 72 } as RoundWithCourse["course"],
+      }),
+    ];
+
+    const stats = computeRecentStats(rounds);
+    expect(stats.avgScore).toBeCloseTo(90.1485, 3);
   });
 });

@@ -4,17 +4,40 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { DifferentialLineChart } from "@/components/differential-line-chart";
-import { IndexLineChart } from "@/components/index-line-chart";
+import { MetricLineChart } from "@/components/metric-line-chart";
 import { RoundFormDialog } from "@/components/round-form-dialog";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import { fetchCourses, fetchDashboard, fetchRounds } from "@/lib/apiClient";
 import { formatNumber, formatPercent } from "@/lib/format";
 import { buildEffectiveDifferentials } from "@/lib/handicap";
 import { PLAYER_IDS, type Course, type PlayerId, type RoundWithCourse } from "@/lib/types";
+
+type ChartMetric =
+  | "index"
+  | "differential"
+  | "score"
+  | "putts"
+  | "balls_lost"
+  | "gir"
+  | "fir"
+  | "three_putts"
+  | "pcc";
+
+const CHART_OPTIONS: Array<{ value: ChartMetric; label: string; color: string }> = [
+  { value: "index", label: "Handicap Index", color: "#3f6212" },
+  { value: "differential", label: "Differential", color: "#1d4ed8" },
+  { value: "score", label: "Score", color: "#b45309" },
+  { value: "putts", label: "Putts", color: "#475569" },
+  { value: "balls_lost", label: "Balls Lost", color: "#dc2626" },
+  { value: "gir", label: "GIR", color: "#0f766e" },
+  { value: "fir", label: "FIR", color: "#7c3aed" },
+  { value: "three_putts", label: "3-putts", color: "#334155" },
+  { value: "pcc", label: "PCC", color: "#0369a1" },
+];
 
 export default function PlayerDashboardPage() {
   const params = useParams<{ playerId: string }>();
@@ -25,7 +48,7 @@ export default function PlayerDashboardPage() {
   const [dashboard, setDashboard] = useState<Awaited<ReturnType<typeof fetchDashboard>> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [chartMode, setChartMode] = useState<"index" | "differential">("index");
+  const [chartMetric, setChartMetric] = useState<ChartMetric>("index");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,10 +84,24 @@ export default function PlayerDashboardPage() {
     void load();
   }, [load, playerId]);
 
-  const differentialSeries = useMemo(
-    () => buildEffectiveDifferentials(rounds).map((entry) => ({ date: entry.date, differential: entry.value })),
-    [rounds],
-  );
+  const chartData = useMemo(() => {
+    if (!dashboard) return [];
+    if (chartMetric === "index") {
+      return dashboard.indexSeries.map((entry) => ({ date: entry.date, value: entry.index }));
+    }
+    if (chartMetric === "differential") {
+      return buildEffectiveDifferentials(rounds).map((entry) => ({ date: entry.date, value: entry.value }));
+    }
+
+    return [...rounds]
+      .sort((a, b) => a.played_at.localeCompare(b.played_at))
+      .map((round) => ({
+        date: round.played_at,
+        value: round[chartMetric] as number | null,
+      }));
+  }, [chartMetric, dashboard, rounds]);
+
+  const selectedChartOption = CHART_OPTIONS.find((option) => option.value === chartMetric) ?? CHART_OPTIONS[0];
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 py-8 md:px-8">
@@ -93,33 +130,28 @@ export default function PlayerDashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Current Handicap Index: {formatNumber(dashboard.currentIndex, 1)}</CardTitle>
               <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant={chartMode === "index" ? "default" : "secondary"}
-                  size="sm"
-                  onClick={() => setChartMode("index")}
+                <Select
+                  value={chartMetric}
+                  onChange={(event) => setChartMetric(event.target.value as ChartMetric)}
+                  className="w-44"
                 >
-                  Index
-                </Button>
-                <Button
-                  type="button"
-                  variant={chartMode === "differential" ? "default" : "secondary"}
-                  size="sm"
-                  onClick={() => setChartMode("differential")}
-                >
-                  Differential
-                </Button>
+                  {CHART_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
                 {dashboard.provisional ? <Badge>Provisional</Badge> : null}
               </div>
             </CardHeader>
             <CardContent>
               {dashboard.indexMessage ? <Alert>{dashboard.indexMessage}</Alert> : null}
               <div className="mt-3">
-                {chartMode === "index" ? (
-                  <IndexLineChart data={dashboard.indexSeries} />
-                ) : (
-                  <DifferentialLineChart data={differentialSeries} />
-                )}
+                <MetricLineChart
+                  data={chartData}
+                  color={selectedChartOption.color}
+                  emptyLabel={`No ${selectedChartOption.label.toLowerCase()} data yet.`}
+                />
               </div>
             </CardContent>
           </Card>

@@ -144,6 +144,7 @@ export default function PlayerRoundsPage() {
                   <TableHead>Score</TableHead>
                   <TableHead>Differential</TableHead>
                   <TableHead>Putts</TableHead>
+                  <TableHead>Balls lost</TableHead>
                   <TableHead>GIR</TableHead>
                   <TableHead>FIR</TableHead>
                   <TableHead>3-putts</TableHead>
@@ -163,6 +164,7 @@ export default function PlayerRoundsPage() {
                         : "-"}
                     </TableCell>
                     <TableCell>{round.putts ?? "-"}</TableCell>
+                    <TableCell>{round.balls_lost ?? "-"}</TableCell>
                     <TableCell>{round.gir ?? "-"}</TableCell>
                     <TableCell>{round.fir ?? "-"}</TableCell>
                     <TableCell>{round.three_putts ?? "-"}</TableCell>

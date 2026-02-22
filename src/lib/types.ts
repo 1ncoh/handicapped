@@ -27,6 +27,7 @@ export type Round = {
   holes: 9 | 18;
   score: number;
   putts: number | null;
+  balls_lost: number | null;
   gir: number | null;
   fir: number | null;
   three_putts: number | null;

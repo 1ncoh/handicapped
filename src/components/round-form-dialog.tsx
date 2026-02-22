@@ -27,6 +27,7 @@ type RoundPayload = {
   holes: 9 | 18;
   score: number;
   putts: number | null;
+  balls_lost: number | null;
   gir: number | null;
   fir: number | null;
   three_putts: number | null;
@@ -46,6 +47,7 @@ function toPayload(form: Record<string, string>, defaultHoles: 9 | 18): RoundPay
     holes: Number(form.holes || defaultHoles) as 9 | 18,
     score: Number(form.score),
     putts: parseNullableInt(form.putts),
+    balls_lost: parseNullableInt(form.balls_lost),
     gir: parseNullableInt(form.gir),
     fir: parseNullableInt(form.fir),
     three_putts: parseNullableInt(form.three_putts),
@@ -82,6 +84,7 @@ export function RoundFormDialog({
     holes: String(round?.holes ?? initialCourse?.holes ?? 18),
     score: String(round?.score ?? ""),
     putts: round?.putts == null ? "" : String(round.putts),
+    balls_lost: round?.balls_lost == null ? "" : String(round.balls_lost),
     gir: round?.gir == null ? "" : String(round.gir),
     fir: round?.fir == null ? "" : String(round.fir),
     three_putts: round?.three_putts == null ? "" : String(round.three_putts),
@@ -99,6 +102,7 @@ export function RoundFormDialog({
         holes: String(round?.holes ?? resetCourse?.holes ?? 18),
         score: String(round?.score ?? ""),
         putts: round?.putts == null ? "" : String(round.putts),
+        balls_lost: round?.balls_lost == null ? "" : String(round.balls_lost),
         gir: round?.gir == null ? "" : String(round.gir),
         fir: round?.fir == null ? "" : String(round.fir),
         three_putts: round?.three_putts == null ? "" : String(round.three_putts),
@@ -230,6 +234,18 @@ export function RoundFormDialog({
               max={120}
               value={form.putts}
               onChange={(e) => setForm((prev) => ({ ...prev, putts: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="balls_lost">Balls lost (optional)</Label>
+            <Input
+              id="balls_lost"
+              type="number"
+              min={0}
+              max={30}
+              value={form.balls_lost}
+              onChange={(e) => setForm((prev) => ({ ...prev, balls_lost: e.target.value }))}
             />
           </div>
 
