@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { RoundFormDialog } from "@/components/round-form-dialog";
 import { Alert } from "@/components/ui/alert";
@@ -86,16 +86,24 @@ export default function PlayerRoundsPage() {
     return "Rounds";
   }, [playerId]);
 
-  const differentialByRoundId = useMemo(() => {
-    const map = new Map<string, number>();
+  const { differentialByRoundId, cutoffRoundId } = useMemo(() => {
     const effective = buildEffectiveDifferentials(allRounds);
+
+    const map = new Map<string, number>();
     for (const entry of effective) {
       const roundId = entry.roundIds[0];
-      if (roundId) {
-        map.set(roundId, entry.value);
-      }
+      if (roundId) map.set(roundId, entry.value);
     }
-    return map;
+
+    // effective is sorted oldest-first; slice(-20) gives the last-20 window.
+    // effective[length - 20] is the oldest round still inside that window —
+    // the separator in the table (sorted newest-first) goes right after that row.
+    // If there are fewer than 20 effective entries every round is in the window,
+    // so no separator is needed.
+    const cutoff =
+      effective.length >= 20 ? effective[effective.length - 20]?.roundIds[0] : undefined;
+
+    return { differentialByRoundId: map, cutoffRoundId: cutoff };
   }, [allRounds]);
 
   const usedRoundIds = useMemo(() => getUsedRoundIdsForCurrentIndex(allRounds), [allRounds]);
@@ -157,7 +165,8 @@ export default function PlayerRoundsPage() {
               </TableHeader>
               <TableBody>
                 {rounds.map((round) => (
-                  <TableRow key={round.id}>
+                  <React.Fragment key={round.id}>
+                  <TableRow>
                     <TableCell>{readableDate(round.played_at)}</TableCell>
                     <TableCell>{round.course.name}</TableCell>
                     <TableCell>{round.holes}</TableCell>
@@ -191,6 +200,17 @@ export default function PlayerRoundsPage() {
                       </div>
                     </TableCell>
                   </TableRow>
+                  {cutoffRoundId === round.id ? (
+                    <TableRow key="cutoff-line">
+                      <TableCell
+                        colSpan={12}
+                        className="border-t-2 border-dashed border-zinc-300 py-1 text-center text-xs text-zinc-400"
+                      >
+                        rounds below this line are outside the last 20 and do not count towards handicap
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
