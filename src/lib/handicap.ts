@@ -14,6 +14,9 @@ export function computeDifferential(input: {
   return (113 / input.slope) * (input.adjustedGrossScore - input.courseRating - pcc);
 }
 
+// When 9 holes are played on an 18-hole course, halve the full course rating/par
+// so the differential formula uses values that match the holes actually played.
+// (If the course is already stored as a 9-hole course its rating/par are already correct.)
 function ratingForPlayedHoles(round: RoundWithCourse) {
   if (round.holes === 9 && round.course.holes === 18) {
     return round.course.course_rating / 2;
@@ -37,10 +40,22 @@ export function computeRoundDifferential(round: RoundWithCourse) {
   });
 }
 
+// The expected (average) 9-hole differential for a player at this handicap level.
+// Formula: half the current index plus a constant offset (1.197) that accounts for
+// the statistical relationship between 9-hole and 18-hole scoring variance.
 function expectedNineDifferential(handicapAtTime: number) {
   return handicapAtTime / 2 + 1.197;
 }
 
+// Converts a round into an 18-hole-equivalent effective differential.
+//
+// For 18-hole rounds this is just the raw differential.
+//
+// For 9-hole rounds we do NOT wait to pair with a second 9-hole round.
+// Instead, the raw 9-hole differential is combined with the expected 9-hole
+// differential for the player's current handicap to produce a single effective
+// value immediately. This lets each 9-hole round count on its own while still
+// producing a number on the same scale as an 18-hole differential.
 function toDifferential(round: RoundWithCourse, handicapAtTime: number) {
   const actual = computeRoundDifferential(round);
   if (round.holes === 9) {
@@ -50,6 +65,10 @@ function toDifferential(round: RoundWithCourse, handicapAtTime: number) {
   return computeRoundDifferential(round);
 }
 
+// Processes rounds oldest-first, computing each round's effective differential
+// using the handicap index that existed at that point in time. The running index
+// is needed because 9-hole effective differentials depend on the current handicap
+// (see toDifferential), so later rounds must see the index built from earlier ones.
 function evaluateRoundsChronological(rounds: RoundWithCourse[]) {
   const ordered = [...rounds].sort((a, b) => {
     const byDate = a.played_at.localeCompare(b.played_at);
