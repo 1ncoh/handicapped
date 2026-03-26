@@ -142,13 +142,6 @@ export default function PlayerRoundsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="mb-3 text-xs text-zinc-400">
-            The dashed line marks the edge of the last 20 rounds — only rounds above it are eligible for handicap calculation.{" "}
-            <span className="inline-flex items-center gap-1">
-              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800">Yes</span>
-            </span>{" "}
-            in the Used column means that round is one of the best 8 differentials from the last 20, which sets your current index.
-          </p>
           {error ? <Alert className="mb-3 border-red-300 bg-red-50 text-red-900">{error}</Alert> : null}
           {loading ? <p className="text-sm text-zinc-500">Loading rounds...</p> : null}
 

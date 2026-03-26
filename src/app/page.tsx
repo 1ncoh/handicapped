@@ -107,7 +107,7 @@ export default function HomePage() {
           <Link href="/courses">Manage courses</Link>
         </Button>
         <Button asChild variant="ghost">
-          <Link href="/export">Export JSON</Link>
+          <Link href="/export">Export data</Link>
         </Button>
       </header>
 
