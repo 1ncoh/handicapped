@@ -61,7 +61,13 @@ export function HomeComparisonChart({ data }: { data: Point[] }) {
           <YAxis width={44} domain={["auto", "auto"]} />
           <Tooltip
             formatter={(v) => (v == null ? "-" : Number(v).toFixed(1))}
-            labelFormatter={(label) => new Date(`${label}T00:00:00`).toLocaleDateString()}
+            labelFormatter={(label) =>
+              new Date(`${label}T00:00:00`).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })
+            }
           />
           <Legend />
           <Line type="monotone" dataKey="randall" name="Randall" stroke="#3f6212" strokeWidth={2} dot={false} />

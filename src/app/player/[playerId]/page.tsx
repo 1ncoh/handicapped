@@ -40,6 +40,14 @@ const CHART_OPTIONS: Array<{ value: ChartMetric; label: string; color: string }>
   { value: "pcc", label: "PCC", color: "#0369a1" },
 ];
 
+const STAT_CARDS = (stats: { avgScore: number | null; avgPutts: number | null; girPct: number | null; firPct: number | null; threePuttRate: number | null }) => [
+  { label: "Avg Score", value: formatNumber(stats.avgScore, 1), sub: "last 10 rounds" },
+  { label: "Avg Putts", value: formatNumber(stats.avgPutts, 1), sub: "last 10 rounds" },
+  { label: "GIR%", value: formatPercent(stats.girPct), sub: "greens in regulation" },
+  { label: "FIR%", value: formatPercent(stats.firPct), sub: "fairways in regulation" },
+  { label: "3-Putt Rate", value: formatNumber(stats.threePuttRate, 1), sub: "per round" },
+];
+
 export default function PlayerDashboardPage() {
   const params = useParams<{ playerId: string }>();
   const playerId = params.playerId;
@@ -117,7 +125,7 @@ export default function PlayerDashboardPage() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/" className="text-sm text-lime-800 underline">
-            Back home
+            ← Home
           </Link>
           <h1 className="mt-1 text-3xl font-bold text-zinc-900">{dashboard?.player.name ?? "Player dashboard"}</h1>
         </div>
@@ -136,32 +144,41 @@ export default function PlayerDashboardPage() {
       {dashboard && !loading ? (
         <div className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Current Handicap Index: {formatNumber(dashboard.currentIndex, 1)}</CardTitle>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={chartMetric}
-                  onChange={(event) => setChartMetric(event.target.value as ChartMetric)}
-                  className="w-44"
-                >
-                  {CHART_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-                <Select
-                  value={timeframe}
-                  onChange={(event) => setTimeframe(event.target.value as TimeframeOption)}
-                  className="w-36"
-                >
-                  <option value="90d">90 days</option>
-                  <option value="6m">6 months</option>
-                  <option value="1y">1 year</option>
-                  <option value="all">All time</option>
-                  <option value="custom">Custom</option>
-                </Select>
-                {dashboard.provisional ? <Badge>Provisional</Badge> : null}
+            <CardHeader>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <CardTitle>
+                    {selectedChartOption.label}
+                    {chartMetric === "index"
+                      ? `: ${formatNumber(dashboard.currentIndex, 1)}`
+                      : null}
+                  </CardTitle>
+                  {dashboard.provisional ? <Badge>Provisional</Badge> : null}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Select
+                    value={chartMetric}
+                    onChange={(event) => setChartMetric(event.target.value as ChartMetric)}
+                    className="w-full sm:w-44"
+                  >
+                    {CHART_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                  <Select
+                    value={timeframe}
+                    onChange={(event) => setTimeframe(event.target.value as TimeframeOption)}
+                    className="w-full sm:w-36"
+                  >
+                    <option value="90d">90 days</option>
+                    <option value="6m">6 months</option>
+                    <option value="1y">1 year</option>
+                    <option value="all">All time</option>
+                    <option value="custom">Custom</option>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -187,58 +204,29 @@ export default function PlayerDashboardPage() {
                   </div>
                 </div>
               ) : null}
-              {dashboard.indexMessage ? <Alert>{dashboard.indexMessage}</Alert> : null}
-              <div className="mt-3">
-                <MetricLineChart
-                  data={filteredChartData}
-                  color={selectedChartOption.color}
-                  emptyLabel={`No ${selectedChartOption.label.toLowerCase()} data yet.`}
-                />
-              </div>
+              {dashboard.indexMessage ? <Alert className="mb-3">{dashboard.indexMessage}</Alert> : null}
+              <MetricLineChart
+                data={filteredChartData}
+                color={selectedChartOption.color}
+                emptyLabel={`No ${selectedChartOption.label.toLowerCase()} data yet.`}
+              />
             </CardContent>
           </Card>
 
-          <section className="grid grid-cols-2 gap-3 md:grid-cols-5">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Avg score (10)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-semibold">{formatNumber(dashboard.recentStats.avgScore, 1)}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Avg putts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-semibold">{formatNumber(dashboard.recentStats.avgPutts, 1)}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">GIR%</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-semibold">{formatPercent(dashboard.recentStats.girPct)}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">FIR%</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-semibold">{formatPercent(dashboard.recentStats.firPct)}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">3-putt rate</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-semibold">{formatNumber(dashboard.recentStats.threePuttRate, 1)}</div>
-              </CardContent>
-            </Card>
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+            {STAT_CARDS(dashboard.recentStats).map(({ label, value, sub }) => (
+              <Card key={label}>
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                    {label}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-zinc-900">{value}</div>
+                  <div className="mt-0.5 text-xs text-zinc-400">{sub}</div>
+                </CardContent>
+              </Card>
+            ))}
           </section>
         </div>
       ) : null}
