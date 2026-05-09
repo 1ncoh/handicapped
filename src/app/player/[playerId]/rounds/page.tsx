@@ -158,9 +158,9 @@ export default function PlayerRoundsPage() {
                   <TableHead>Course</TableHead>
                   <TableHead className="hidden sm:table-cell">Holes</TableHead>
                   <TableHead>Score</TableHead>
-                  <TableHead className="hidden sm:table-cell">Differential</TableHead>
-                  <TableHead className="hidden sm:table-cell">In index</TableHead>
-                  <TableHead className="hidden md:table-cell">Putts</TableHead>
+                  <TableHead>Differential</TableHead>
+                  <TableHead>In index</TableHead>
+                  <TableHead>Putts</TableHead>
                   <TableHead className="hidden lg:table-cell">Balls lost</TableHead>
                   <TableHead className="hidden md:table-cell">GIR</TableHead>
                   <TableHead className="hidden md:table-cell">FIR</TableHead>
@@ -176,19 +176,19 @@ export default function PlayerRoundsPage() {
                       <TableCell>{round.course.name}</TableCell>
                       <TableCell className="hidden sm:table-cell">{round.holes}</TableCell>
                       <TableCell>{round.score}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell>
                         {differentialByRoundId.has(round.id)
                           ? differentialByRoundId.get(round.id)?.toFixed(1)
                           : "-"}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell>
                         {usedRoundIds.has(round.id) ? (
                           <Badge className="bg-blue-100 text-blue-800">Yes</Badge>
                         ) : (
                           "-"
                         )}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">{round.putts ?? "-"}</TableCell>
+                      <TableCell>{round.putts ?? "-"}</TableCell>
                       <TableCell className="hidden lg:table-cell">{round.balls_lost ?? "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         {round.gir != null ? `${round.gir}/${round.holes}` : "-"}

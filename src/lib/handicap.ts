@@ -193,7 +193,7 @@ export function computeRecentStats(rounds: RoundWithCourse[]) {
 
   const withPutts = recent.filter((r) => r.putts != null);
   const avgPutts = withPutts.length
-    ? withPutts.reduce((sum, r) => sum + (r.putts ?? 0), 0) / withPutts.length
+    ? withPutts.reduce((sum, r) => sum + (r.putts ?? 0) / r.holes, 0) / withPutts.length
     : null;
 
   const withGir = recent.filter((r) => r.gir != null);
@@ -212,8 +212,9 @@ export function computeRecentStats(rounds: RoundWithCourse[]) {
 
   const withThreePutts = recent.filter((r) => r.three_putts != null);
   const threePuttRate = withThreePutts.length
-    ? withThreePutts.reduce((sum, r) => sum + (r.three_putts ?? 0), 0) /
-      withThreePutts.length
+    ? (withThreePutts.reduce((sum, r) => sum + (r.three_putts ?? 0), 0) /
+        withThreePutts.reduce((sum, r) => sum + r.holes, 0)) *
+      100
     : null;
 
   return {
