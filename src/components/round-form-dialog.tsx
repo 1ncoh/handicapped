@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -54,6 +53,16 @@ function toPayload(form: Record<string, string>, defaultHoles: 9 | 18): RoundPay
     pcc: Number(form.pcc || 0),
     notes: form.notes?.trim() || null,
   };
+}
+
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="col-span-2 flex items-center gap-3 pt-1">
+      <div className="h-px flex-1 bg-zinc-100" />
+      <span className="text-xs font-medium uppercase tracking-wide text-zinc-400">{label}</span>
+      <div className="h-px flex-1 bg-zinc-100" />
+    </div>
+  );
 }
 
 export function RoundFormDialog({
@@ -120,6 +129,21 @@ export function RoundFormDialog({
 
   const holesMismatch = selectedCourse && Number(form.holes) !== selectedCourse.holes;
 
+  const parForHoles = useMemo(() => {
+    if (!selectedCourse) return null;
+    if (Number(form.holes) === 9 && selectedCourse.holes === 18) {
+      return Math.round(selectedCourse.par / 2);
+    }
+    return selectedCourse.par;
+  }, [selectedCourse, form.holes]);
+
+  const scoreToPar = useMemo(() => {
+    if (parForHoles == null || !form.score.trim()) return null;
+    const diff = Number(form.score) - parForHoles;
+    if (Number.isNaN(diff)) return null;
+    return diff;
+  }, [parForHoles, form.score]);
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -132,9 +156,7 @@ export function RoundFormDialog({
 
       const response = await fetch(endpoint, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -155,19 +177,17 @@ export function RoundFormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={triggerVariant}>{triggerLabel ?? (round ? "Edit" : "Add round")}</Button>
+        <Button size="sm" variant={triggerVariant}>{triggerLabel ?? (round ? "Edit" : "Add round")}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{round ? "Edit round" : "Add round"}</DialogTitle>
-          <DialogDescription>
-            Enter score and optional stats. All writes go through server API validation.
-          </DialogDescription>
         </DialogHeader>
 
-        <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={handleSubmit}>
-          <div className="md:col-span-1">
-            <Label htmlFor="played_at">Played date</Label>
+        <form className="grid grid-cols-2 gap-x-3 gap-y-3" onSubmit={handleSubmit}>
+          {/* Core fields */}
+          <div>
+            <Label htmlFor="played_at">Date</Label>
             <Input
               id="played_at"
               type="date"
@@ -177,7 +197,7 @@ export function RoundFormDialog({
             />
           </div>
 
-          <div className="md:col-span-1">
+          <div>
             <Label htmlFor="course_id">Course</Label>
             <Select
               id="course_id"
@@ -213,7 +233,12 @@ export function RoundFormDialog({
           </div>
 
           <div>
-            <Label htmlFor="score">Score</Label>
+            <Label htmlFor="score">
+              Score
+              {parForHoles != null ? (
+                <span className="ml-2 font-normal text-zinc-400">par {parForHoles}</span>
+              ) : null}
+            </Label>
             <Input
               id="score"
               type="number"
@@ -223,10 +248,32 @@ export function RoundFormDialog({
               onChange={(e) => setForm((prev) => ({ ...prev, score: e.target.value }))}
               required
             />
+            {scoreToPar != null ? (
+              <div
+                className={`mt-1 text-xs font-medium ${
+                  scoreToPar < 0
+                    ? "text-lime-700"
+                    : scoreToPar === 0
+                      ? "text-zinc-500"
+                      : "text-red-600"
+                }`}
+              >
+                {scoreToPar > 0 ? `+${scoreToPar}` : scoreToPar === 0 ? "Even" : String(scoreToPar)}
+              </div>
+            ) : null}
           </div>
 
+          {holesMismatch ? (
+            <Alert className="col-span-2">
+              Selected holes differ from the course default ({selectedCourse.holes}). You can still save.
+            </Alert>
+          ) : null}
+
+          {/* Optional stats */}
+          <SectionDivider label="Optional stats" />
+
           <div>
-            <Label htmlFor="putts">Putts (optional)</Label>
+            <Label htmlFor="putts">Putts</Label>
             <Input
               id="putts"
               type="number"
@@ -238,19 +285,7 @@ export function RoundFormDialog({
           </div>
 
           <div>
-            <Label htmlFor="balls_lost">Balls lost (optional)</Label>
-            <Input
-              id="balls_lost"
-              type="number"
-              min={0}
-              max={30}
-              value={form.balls_lost}
-              onChange={(e) => setForm((prev) => ({ ...prev, balls_lost: e.target.value }))}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="gir">GIR (optional)</Label>
+            <Label htmlFor="gir">GIR</Label>
             <Input
               id="gir"
               type="number"
@@ -262,7 +297,7 @@ export function RoundFormDialog({
           </div>
 
           <div>
-            <Label htmlFor="fir">FIR (optional)</Label>
+            <Label htmlFor="fir">FIR</Label>
             <Input
               id="fir"
               type="number"
@@ -274,7 +309,7 @@ export function RoundFormDialog({
           </div>
 
           <div>
-            <Label htmlFor="three_putts">3-putts (optional)</Label>
+            <Label htmlFor="three_putts">3-putts</Label>
             <Input
               id="three_putts"
               type="number"
@@ -286,7 +321,24 @@ export function RoundFormDialog({
           </div>
 
           <div>
-            <Label htmlFor="pcc">PCC</Label>
+            <Label htmlFor="balls_lost">Balls lost</Label>
+            <Input
+              id="balls_lost"
+              type="number"
+              min={0}
+              max={30}
+              value={form.balls_lost}
+              onChange={(e) => setForm((prev) => ({ ...prev, balls_lost: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="pcc">
+              PCC
+              <span className="ml-1 font-normal text-zinc-400" title="Playing Condition Calculation adjustment">
+                (–5 to +5)
+              </span>
+            </Label>
             <Input
               id="pcc"
               type="number"
@@ -297,31 +349,25 @@ export function RoundFormDialog({
             />
           </div>
 
-          <div className="md:col-span-2">
+          <div className="col-span-2">
             <Label htmlFor="notes">Notes</Label>
             <textarea
               id="notes"
               className="w-full rounded-md border border-zinc-300 p-2 text-sm outline-none ring-lime-700 focus:ring-2"
-              rows={3}
+              rows={2}
               value={form.notes}
               onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
             />
           </div>
 
-          {holesMismatch ? (
-            <Alert className="md:col-span-2">
-              Selected holes differ from the course default ({selectedCourse.holes}). You can still save.
-            </Alert>
-          ) : null}
+          {error ? <Alert className="col-span-2 border-red-300 bg-red-50 text-red-900">{error}</Alert> : null}
 
-          {error ? <Alert className="md:col-span-2 border-red-300 bg-red-50 text-red-900">{error}</Alert> : null}
-
-          <div className="md:col-span-2 flex justify-end gap-2">
+          <div className="col-span-2 flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={busy || courses.length === 0}>
-              {busy ? "Saving..." : "Save round"}
+              {busy ? "Saving..." : "Save"}
             </Button>
           </div>
         </form>

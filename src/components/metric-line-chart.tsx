@@ -41,9 +41,15 @@ export function MetricLineChart({
           <YAxis width={44} domain={["auto", "auto"]} />
           <Tooltip
             formatter={(v) => Number(v).toFixed(1)}
-            labelFormatter={(label) => new Date(`${label}T00:00:00`).toLocaleDateString()}
+            labelFormatter={(label) =>
+              new Date(`${label}T00:00:00`).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })
+            }
           />
-          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot activeDot={{ r: 4 }} />
+          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>

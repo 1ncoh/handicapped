@@ -98,17 +98,21 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 py-8 md:px-8">
-      <header className="mb-8 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">handicapped</h1>
-          <p className="text-sm text-zinc-600">Track rounds, stats, and Handicap Index for Randall and Jaden.</p>
+      <header className="mb-8">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900">handicapped</h1>
+            <p className="text-sm text-zinc-600">Track rounds, stats, and Handicap Index for Randall and Jaden.</p>
+          </div>
+          <div className="flex items-center gap-4 pt-1 text-sm">
+            <Link href="/courses" className="text-zinc-500 transition-colors hover:text-zinc-900">
+              Manage courses
+            </Link>
+            <Link href="/export" className="text-zinc-500 transition-colors hover:text-zinc-900">
+              Export data
+            </Link>
+          </div>
         </div>
-        <Button asChild variant="secondary">
-          <Link href="/courses">Manage courses</Link>
-        </Button>
-        <Button asChild variant="ghost">
-          <Link href="/export">Export data</Link>
-        </Button>
       </header>
 
       {error ? (
@@ -128,14 +132,31 @@ export default function HomePage() {
       {loading ? <p className="text-sm text-zinc-500">Loading dashboards...</p> : null}
 
       {!loading && !error ? (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {players.map((player) => {
+              const playerDashboard = dashboards[player.id as PlayerId];
+              return (
+                <PlayerHomeCard
+                  key={player.id}
+                  playerId={player.id as PlayerId}
+                  playerName={player.name}
+                  courses={courses}
+                  onRoundSaved={load}
+                  currentIndex={playerDashboard?.currentIndex ?? null}
+                  provisional={playerDashboard?.provisional ?? false}
+                />
+              );
+            })}
+          </div>
+
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle>Handicap Index Over Time</CardTitle>
               <Select
                 value={timeframe}
                 onChange={(event) => setTimeframe(event.target.value as TimeframeOption)}
-                className="w-36"
+                className="w-full sm:w-36"
               >
                 <option value="90d">90 days</option>
                 <option value="6m">6 months</option>
@@ -170,23 +191,6 @@ export default function HomePage() {
               <HomeComparisonChart data={filteredComparisonData} />
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {players.map((player) => {
-              const playerDashboard = dashboards[player.id as PlayerId];
-              return (
-                <PlayerHomeCard
-                  key={player.id}
-                  playerId={player.id as PlayerId}
-                  playerName={player.name}
-                  courses={courses}
-                  onRoundSaved={load}
-                  currentIndex={playerDashboard?.currentIndex ?? null}
-                  provisional={playerDashboard?.provisional ?? false}
-                />
-              );
-            })}
-          </div>
         </div>
       ) : null}
     </main>

@@ -9,6 +9,7 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fetchCourses, fetchRounds } from "@/lib/apiClient";
@@ -27,6 +28,7 @@ export default function PlayerRoundsPage() {
   const [allRounds, setAllRounds] = useState<RoundWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [filterCourseId, setFilterCourseId] = useState<string>("");
@@ -67,22 +69,21 @@ export default function PlayerRoundsPage() {
     void load();
   }, [load, playerId]);
 
-  async function deleteRound(roundId: string) {
-    if (!window.confirm("Delete this round?")) return;
-
-    const response = await fetch(`/api/rounds/${roundId}`, { method: "DELETE" });
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    const response = await fetch(`/api/rounds/${pendingDeleteId}`, { method: "DELETE" });
     const data = await response.json();
+    setPendingDeleteId(null);
     if (!response.ok) {
       setError(data?.error?.message ?? "Failed to delete round");
       return;
     }
-
     await load();
   }
 
   const title = useMemo(() => {
-    if (playerId === "randall") return "Randall rounds";
-    if (playerId === "jaden") return "Jaden rounds";
+    if (playerId === "randall") return "Randall's rounds";
+    if (playerId === "jaden") return "Jaden's rounds";
     return "Rounds";
   }, [playerId]);
 
@@ -95,11 +96,6 @@ export default function PlayerRoundsPage() {
       if (roundId) map.set(roundId, entry.value);
     }
 
-    // effective is sorted oldest-first; slice(-20) gives the last-20 window.
-    // effective[length - 20] is the oldest round still inside that window —
-    // the separator in the table (sorted newest-first) goes right after that row.
-    // If there are fewer than 20 effective entries every round is in the window,
-    // so no separator is needed.
     const cutoff =
       effective.length >= 20 ? effective[effective.length - 20]?.roundIds[0] : undefined;
 
@@ -110,10 +106,19 @@ export default function PlayerRoundsPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 py-8 md:px-8">
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => { if (!open) setPendingDeleteId(null); }}
+        title="Delete this round?"
+        description="This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+      />
+
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <Link href={`/player/${playerId}`} className="text-sm text-lime-800 underline">
-            Back to dashboard
+            ← Dashboard
           </Link>
           <h1 className="text-3xl font-bold">{title}</h1>
         </div>
@@ -151,65 +156,77 @@ export default function PlayerRoundsPage() {
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Course</TableHead>
-                  <TableHead>Holes</TableHead>
+                  <TableHead className="hidden sm:table-cell">Holes</TableHead>
                   <TableHead>Score</TableHead>
-                  <TableHead>Differential</TableHead>
-                  <TableHead>Used</TableHead>
-                  <TableHead>Putts</TableHead>
-                  <TableHead>Balls lost</TableHead>
-                  <TableHead>GIR</TableHead>
-                  <TableHead>FIR</TableHead>
-                  <TableHead>3-putts</TableHead>
+                  <TableHead className="hidden sm:table-cell">Differential</TableHead>
+                  <TableHead className="hidden sm:table-cell">In index</TableHead>
+                  <TableHead className="hidden md:table-cell">Putts</TableHead>
+                  <TableHead className="hidden lg:table-cell">Balls lost</TableHead>
+                  <TableHead className="hidden md:table-cell">GIR</TableHead>
+                  <TableHead className="hidden md:table-cell">FIR</TableHead>
+                  <TableHead className="hidden lg:table-cell">3-putts</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rounds.map((round) => (
                   <React.Fragment key={round.id}>
-                  <TableRow>
-                    <TableCell>{readableDate(round.played_at)}</TableCell>
-                    <TableCell>{round.course.name}</TableCell>
-                    <TableCell>{round.holes}</TableCell>
-                    <TableCell>{round.score}</TableCell>
-                    <TableCell>
-                      {differentialByRoundId.has(round.id)
-                        ? differentialByRoundId.get(round.id)?.toFixed(1)
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {usedRoundIds.has(round.id) ? <Badge className="bg-blue-100 text-blue-800">Yes</Badge> : "-"}
-                    </TableCell>
-                    <TableCell>{round.putts ?? "-"}</TableCell>
-                    <TableCell>{round.balls_lost ?? "-"}</TableCell>
-                    <TableCell>{round.gir ?? "-"}</TableCell>
-                    <TableCell>{round.fir ?? "-"}</TableCell>
-                    <TableCell>{round.three_putts ?? "-"}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <RoundFormDialog
-                          playerId={playerId}
-                          courses={courses}
-                          onSaved={load}
-                          round={round}
-                          triggerLabel="Edit"
-                          triggerVariant="secondary"
-                        />
-                        <Button variant="destructive" size="sm" onClick={() => deleteRound(round.id)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  {cutoffRoundId === round.id ? (
-                    <TableRow key="cutoff-line">
-                      <TableCell
-                        colSpan={12}
-                        className="border-t-2 border-dashed border-zinc-300 py-1 text-center text-xs text-zinc-400"
-                      >
-                        rounds below this line are outside the last 20 and do not count towards handicap
+                    <TableRow>
+                      <TableCell>{readableDate(round.played_at)}</TableCell>
+                      <TableCell>{round.course.name}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{round.holes}</TableCell>
+                      <TableCell>{round.score}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {differentialByRoundId.has(round.id)
+                          ? differentialByRoundId.get(round.id)?.toFixed(1)
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {usedRoundIds.has(round.id) ? (
+                          <Badge className="bg-blue-100 text-blue-800">Yes</Badge>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{round.putts ?? "-"}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{round.balls_lost ?? "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {round.gir != null ? `${round.gir}/${round.holes}` : "-"}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {round.fir != null ? `${round.fir}/${round.holes}` : "-"}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">{round.three_putts ?? "-"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1.5">
+                          <RoundFormDialog
+                            playerId={playerId}
+                            courses={courses}
+                            onSaved={load}
+                            round={round}
+                            triggerLabel="Edit"
+                            triggerVariant="secondary"
+                          />
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setPendingDeleteId(round.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ) : null}
+                    {cutoffRoundId === round.id ? (
+                      <TableRow key="cutoff-line">
+                        <TableCell
+                          colSpan={12}
+                          className="border-t-2 border-dashed border-zinc-300 py-1.5 text-center text-xs text-zinc-400"
+                        >
+                          ── outside last-20 window · rounds below do not count toward handicap ──
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
                   </React.Fragment>
                 ))}
               </TableBody>
