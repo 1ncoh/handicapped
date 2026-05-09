@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { HomeComparisonChart } from "@/components/home-comparison-chart";
@@ -98,23 +97,6 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 py-8 md:px-8">
-      <header className="mb-8">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-900">handicapped</h1>
-            <p className="text-sm text-zinc-600">Track rounds, stats, and Handicap Index for Randall and Jaden.</p>
-          </div>
-          <div className="flex items-center gap-4 pt-1 text-sm">
-            <Link href="/courses" className="text-zinc-500 transition-colors hover:text-zinc-900">
-              Manage courses
-            </Link>
-            <Link href="/export" className="text-zinc-500 transition-colors hover:text-zinc-900">
-              Export data
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {error ? (
         <Card>
           <CardHeader>
@@ -135,8 +117,8 @@ export default function HomePage() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {players.map((player) => {
-              const playerDashboard = dashboards[player.id as PlayerId];
-              const indexValues = (playerDashboard?.indexSeries ?? [])
+              const d = dashboards[player.id as PlayerId];
+              const indexValues = (d?.indexSeries ?? [])
                 .map((p) => p.index)
                 .filter((v): v is number => v != null);
               const lowestIndex = indexValues.length ? Math.min(...indexValues) : null;
@@ -147,10 +129,12 @@ export default function HomePage() {
                   playerName={player.name}
                   courses={courses}
                   onRoundSaved={load}
-                  currentIndex={playerDashboard?.currentIndex ?? null}
-                  provisional={playerDashboard?.provisional ?? false}
+                  currentIndex={d?.currentIndex ?? null}
+                  provisional={d?.provisional ?? false}
                   lowestIndex={lowestIndex}
-                  avgPuttsPerHole={playerDashboard?.recentStats.avgPutts ?? null}
+                  avgPuttsPerHole={d?.recentStats.avgPutts ?? null}
+                  diffStdDev={d?.consistencyStats.diffStdDev ?? null}
+                  underHandicapRate={d?.consistencyStats.underHandicapRate ?? null}
                 />
               );
             })}

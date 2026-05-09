@@ -172,6 +172,29 @@ export function computeIndexSeries(rounds: RoundWithCourse[]) {
   return series;
 }
 
+function sampleStdDev(values: number[]): number {
+  if (values.length < 2) return 0;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / (values.length - 1);
+  return Math.sqrt(variance);
+}
+
+export function computeConsistencyStats(rounds: RoundWithCourse[]) {
+  const effective = buildEffectiveDifferentials(rounds);
+  const last20 = [...effective].slice(-20);
+  const values = last20.map((d) => d.value);
+
+  const diffStdDev = values.length >= 2 ? truncateOneDecimal(sampleStdDev(values)) : null;
+
+  const { index: currentIndex } = computeHandicapIndexFromEffective(effective);
+  const underHandicapRate =
+    currentIndex != null && last20.length > 0
+      ? (last20.filter((d) => d.value < currentIndex).length / last20.length) * 100
+      : null;
+
+  return { diffStdDev, underHandicapRate };
+}
+
 export function computeRecentStats(rounds: RoundWithCourse[]) {
   const evaluated = evaluateRoundsChronological(rounds).evaluated;
   const adjustedScoreByRoundId = new Map<string, number>();

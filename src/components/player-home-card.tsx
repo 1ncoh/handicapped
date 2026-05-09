@@ -6,8 +6,17 @@ import { RoundFormDialog } from "@/components/round-form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { formatNumber } from "@/lib/format";
+import { formatNumber, formatPercent } from "@/lib/format";
 import type { Course, PlayerId } from "@/lib/types";
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-xs text-zinc-400">{label}</div>
+      <div className="text-sm font-semibold text-zinc-700">{value}</div>
+    </div>
+  );
+}
 
 export function PlayerHomeCard({
   playerId,
@@ -18,6 +27,8 @@ export function PlayerHomeCard({
   provisional,
   lowestIndex,
   avgPuttsPerHole,
+  diffStdDev,
+  underHandicapRate,
 }: {
   playerId: PlayerId;
   playerName: string;
@@ -27,6 +38,8 @@ export function PlayerHomeCard({
   provisional: boolean;
   lowestIndex: number | null;
   avgPuttsPerHole: number | null;
+  diffStdDev: number | null;
+  underHandicapRate: number | null;
 }) {
   return (
     <Card>
@@ -43,15 +56,14 @@ export function PlayerHomeCard({
           </div>
           <div className="mt-0.5 text-xs uppercase tracking-wide text-zinc-400">Handicap Index</div>
 
-          <div className="mt-3 flex gap-5">
-            <div>
-              <div className="text-xs text-zinc-400">Low index</div>
-              <div className="text-sm font-semibold text-zinc-700">{formatNumber(lowestIndex, 1)}</div>
-            </div>
-            <div>
-              <div className="text-xs text-zinc-400">Putts / hole</div>
-              <div className="text-sm font-semibold text-zinc-700">{formatNumber(avgPuttsPerHole, 2)}</div>
-            </div>
+          <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2.5">
+            <MiniStat label="Low index" value={formatNumber(lowestIndex, 1)} />
+            <MiniStat label="Putts / hole" value={formatNumber(avgPuttsPerHole, 2)} />
+            <MiniStat
+              label="Consistency (±)"
+              value={diffStdDev != null ? formatNumber(diffStdDev, 1) : "N/A"}
+            />
+            <MiniStat label="Under HCP" value={formatPercent(underHandicapRate)} />
           </div>
         </div>
         {provisional ? <Badge>Provisional</Badge> : null}

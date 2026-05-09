@@ -55,6 +55,19 @@ function toPayload(form: Record<string, string>, defaultHoles: 9 | 18): RoundPay
   };
 }
 
+function InfoTooltip({ text }: { text: string }) {
+  return (
+    <span className="group relative ml-1.5 inline-block cursor-help align-middle">
+      <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-200 text-[9px] font-bold leading-none text-zinc-500">
+        ?
+      </span>
+      <span className="invisible absolute bottom-full left-1/2 z-20 mb-2 w-60 -translate-x-1/2 rounded-md bg-zinc-800 px-3 py-2 text-xs leading-snug text-white shadow-lg group-hover:visible">
+        {text}
+      </span>
+    </span>
+  );
+}
+
 function SectionDivider({ label }: { label: string }) {
   return (
     <div className="col-span-2 flex items-center gap-3 pt-1">
@@ -333,11 +346,9 @@ export function RoundFormDialog({
           </div>
 
           <div>
-            <Label htmlFor="pcc">
+            <Label htmlFor="pcc" className="flex items-center">
               PCC
-              <span className="ml-1 font-normal text-zinc-400" title="Playing Condition Calculation adjustment">
-                (–5 to +5)
-              </span>
+              <InfoTooltip text="Playing Condition Calculation — a USGA adjustment for when course conditions significantly affect scoring. 0 is normal; negative means easier conditions, positive means harder. Range: −5 to +5." />
             </Label>
             <Input
               id="pcc"

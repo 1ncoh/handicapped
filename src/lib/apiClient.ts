@@ -13,6 +13,10 @@ export type DashboardResponse = {
     firPct: number | null;
     threePuttRate: number | null;
   };
+  consistencyStats: {
+    diffStdDev: number | null;
+    underHandicapRate: number | null;
+  };
   roundsCount: number;
   effectiveCount: number;
 };
