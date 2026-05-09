@@ -32,7 +32,7 @@ const CHART_OPTIONS: Array<{ value: ChartMetric; label: string; color: string }>
   { value: "index", label: "Handicap Index", color: "#3f6212" },
   { value: "differential", label: "Differential", color: "#1d4ed8" },
   { value: "score", label: "Score", color: "#b45309" },
-  { value: "putts", label: "Putts", color: "#475569" },
+  { value: "putts", label: "Putts / hole", color: "#475569" },
   { value: "balls_lost", label: "Balls Lost", color: "#dc2626" },
   { value: "gir", label: "GIR", color: "#0f766e" },
   { value: "fir", label: "FIR", color: "#7c3aed" },
@@ -107,10 +107,11 @@ export default function PlayerDashboardPage() {
 
     return [...rounds]
       .sort((a, b) => a.played_at.localeCompare(b.played_at))
-      .map((round) => ({
-        date: round.played_at,
-        value: round[chartMetric] as number | null,
-      }));
+      .map((round) => {
+        const raw = round[chartMetric] as number | null;
+        const value = chartMetric === "putts" && raw != null ? raw / round.holes : raw;
+        return { date: round.played_at, value };
+      });
   }, [chartMetric, dashboard, rounds]);
 
   const filteredChartData = useMemo(

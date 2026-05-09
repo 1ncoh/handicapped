@@ -16,6 +16,8 @@ export function PlayerHomeCard({
   onRoundSaved,
   currentIndex,
   provisional,
+  lowestIndex,
+  avgPuttsPerHole,
 }: {
   playerId: PlayerId;
   playerName: string;
@@ -23,11 +25,13 @@ export function PlayerHomeCard({
   onRoundSaved: () => Promise<void> | void;
   currentIndex: number | null;
   provisional: boolean;
+  lowestIndex: number | null;
+  avgPuttsPerHole: number | null;
 }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-3">
-        <div>
+        <div className="flex-1">
           <Link
             href={`/player/${playerId}`}
             className="text-base font-semibold text-zinc-700 transition-colors hover:text-zinc-900"
@@ -38,6 +42,17 @@ export function PlayerHomeCard({
             {formatNumber(currentIndex, 1)}
           </div>
           <div className="mt-0.5 text-xs uppercase tracking-wide text-zinc-400">Handicap Index</div>
+
+          <div className="mt-3 flex gap-5">
+            <div>
+              <div className="text-xs text-zinc-400">Low index</div>
+              <div className="text-sm font-semibold text-zinc-700">{formatNumber(lowestIndex, 1)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-zinc-400">Putts / hole</div>
+              <div className="text-sm font-semibold text-zinc-700">{formatNumber(avgPuttsPerHole, 2)}</div>
+            </div>
+          </div>
         </div>
         {provisional ? <Badge>Provisional</Badge> : null}
       </CardHeader>

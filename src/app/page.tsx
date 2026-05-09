@@ -136,6 +136,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {players.map((player) => {
               const playerDashboard = dashboards[player.id as PlayerId];
+              const indexValues = (playerDashboard?.indexSeries ?? [])
+                .map((p) => p.index)
+                .filter((v): v is number => v != null);
+              const lowestIndex = indexValues.length ? Math.min(...indexValues) : null;
               return (
                 <PlayerHomeCard
                   key={player.id}
@@ -145,6 +149,8 @@ export default function HomePage() {
                   onRoundSaved={load}
                   currentIndex={playerDashboard?.currentIndex ?? null}
                   provisional={playerDashboard?.provisional ?? false}
+                  lowestIndex={lowestIndex}
+                  avgPuttsPerHole={playerDashboard?.recentStats.avgPutts ?? null}
                 />
               );
             })}
