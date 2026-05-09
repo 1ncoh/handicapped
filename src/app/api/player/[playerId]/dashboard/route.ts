@@ -1,5 +1,5 @@
 import { err, ok, toApiError } from "@/lib/api";
-import { computeCurrentHandicap, computeIndexSeries, computeRecentStats } from "@/lib/handicap";
+import { computeConsistencyStats, computeCurrentHandicap, computeIndexSeries, computeRecentStats } from "@/lib/handicap";
 import { getPlayer } from "@/lib/repos/playersRepo";
 import { listRoundsByPlayer } from "@/lib/repos/roundsRepo";
 import { parseOrError, playerIdSchema } from "@/lib/validation/schemas";
@@ -24,6 +24,7 @@ export async function GET(
     const current = computeCurrentHandicap(rounds);
     const indexSeries = computeIndexSeries(rounds);
     const recentStats = computeRecentStats(rounds);
+    const consistencyStats = computeConsistencyStats(rounds);
 
     return ok({
       player,
@@ -32,6 +33,7 @@ export async function GET(
       indexMessage: current.message,
       indexSeries,
       recentStats,
+      consistencyStats,
       roundsCount: rounds.length,
       effectiveCount: current.effective.length,
     });
