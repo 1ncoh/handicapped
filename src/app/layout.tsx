@@ -47,6 +47,12 @@ export default function RootLayout({
             >
               Jaden
             </Link>
+            <Link
+              href="/courses"
+              className="rounded-md px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+            >
+              Courses
+            </Link>
           </div>
         </nav>
 
@@ -54,9 +60,6 @@ export default function RootLayout({
 
         <footer className="mt-12 border-t border-zinc-100 py-5">
           <div className="mx-auto flex max-w-6xl items-center justify-center gap-8 px-4 text-xs text-zinc-400 md:px-8">
-            <Link href="/courses" className="transition-colors hover:text-zinc-600">
-              Manage courses
-            </Link>
             <Link href="/export" className="transition-colors hover:text-zinc-600">
               Export data
             </Link>
