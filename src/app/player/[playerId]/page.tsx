@@ -42,10 +42,10 @@ const CHART_OPTIONS: Array<{ value: ChartMetric; label: string; color: string }>
 
 const STAT_CARDS = (stats: { avgScore: number | null; avgPutts: number | null; girPct: number | null; firPct: number | null; threePuttRate: number | null }) => [
   { label: "Avg Score", value: formatNumber(stats.avgScore, 1), sub: "last 10 rounds" },
-  { label: "Avg Putts", value: formatNumber(stats.avgPutts, 1), sub: "last 10 rounds" },
+  { label: "Avg Putts", value: formatNumber(stats.avgPutts, 2), sub: "per hole, last 10" },
   { label: "GIR%", value: formatPercent(stats.girPct), sub: "greens in regulation" },
   { label: "FIR%", value: formatPercent(stats.firPct), sub: "fairways in regulation" },
-  { label: "3-Putt Rate", value: formatNumber(stats.threePuttRate, 1), sub: "per round" },
+  { label: "3-Putt Rate", value: formatPercent(stats.threePuttRate), sub: "of holes played" },
 ];
 
 export default function PlayerDashboardPage() {
